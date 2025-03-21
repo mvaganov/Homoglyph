@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -9,18 +10,53 @@ public class HomoglyphGraph {
 		graph.CalculateAllPaths();
 		char c = (char)0;
 		char start = ' ';
+		List<char> chars = new List<char>();
 		while(c != 27) {
 			c = Console.ReadKey().KeyChar;
 			Console.Write("\b \b");
-			//Console.WriteLine(":"+graph.GetChildren(c));
-			string path = graph.GetPathString(start, c);
-			for(int i = 0; i < path.Length; ++i) {
-				Console.Write($"{path[i]}");
-				Thread.Sleep(100);
+			if (c == 27) {
+				break;
+			}
+			switch (c) {
+				case '\b':
+					if (chars.Count > 0) {
+						chars.RemoveAt(chars.Count - 1);
+					}
+					break;
+				case '\n':
+				case '\r':
+					for(int i = 0; i < chars.Count; ++i) {
+						Console.Write(" ");
+					}
+					Console.Write("\r");
+					PrintLettersMorphingFromOneToTheNext(chars, graph);
+					Console.Write("\n");
+					chars.Clear();
+					break;
+				default:
+					chars.Add(c);
+					break;
+			}
+			Console.Write($"\r{string.Join("", chars)}");
+		}
+	}
+
+	static void PrintLettersMorphingFromOneToTheNext(List<char> chars, HomoglyphGraph graph) {
+		char prevLetter = ' ';
+		for(int i = 0; i < chars.Count; ++i) {
+			graph.AnimateLetters(prevLetter, chars[i]);
+			prevLetter = chars[i];
+		}
+	}
+
+	void AnimateLetters(char start, char end) {
+		string path = GetPathString(start, end);
+		for (int i = 0; i < path.Length; ++i) {
+			Console.Write($"{path[i]}");
+			Thread.Sleep(100);
+			if (i+1 < path.Length) {
 				Console.Write("\b");
 			}
-			//Console.WriteLine(path);
-			start = c;
 		}
 	}
 
@@ -169,7 +205,7 @@ public class HomoglyphGraph {
 		allPaths = new byte[homoglyphs.Length][];
 		for (byte i = 0; i < allPaths.Length; ++i) {
 			byte[] paths = Djikstras(i);
-			Console.WriteLine(string.Join(' ', paths));
+			//Console.WriteLine(string.Join(' ', paths));
 			allPaths[i] = paths;
 		}
 	}
